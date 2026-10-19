@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Attendance System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f8fafc; --card-bg: #ffffff; --primary: #4f46e5; --primary-light: #e0e7ff;
+            --text-main: #1e293b; --text-muted: #64748b; --success: #10b981; --success-bg: #d1fae5;
+            --danger: #ef4444; --danger-bg: #fee2e2; --warning: #f59e0b; --border: #e2e8f0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding-bottom: 80px; }
+        
+        .navbar { background: var(--card-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .logo { font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
+        .logo i { color: var(--primary); font-size: 1.4rem; }
+        
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); border: 1px solid var(--border); }
+        .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 2px 4px rgb(0 0 0 / 0.02); }
+        .stat-val { font-size: 1.8rem; font-weight: 700; margin-bottom: 5px; }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+
+        .chart-container { display: flex; justify-content: center; align-items: center; padding: 10px; position: relative; }
+        .chart-center-text { position: absolute; text-align: center; }
+        .chart-center-val { font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
+        .chart-center-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+
+        .form-group { margin-bottom: 12px; }
+        input { width: 100%; padding: 12px 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-color); font-size: 0.95rem; outline: none; }
+        .btn { width: 100%; padding: 14px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+
+        .student-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
+        .student-item:last-child { border-bottom: none; }
+        .student-info { display: flex; align-items: center; gap: 15px; }
+        .avatar { width: 45px; height: 45px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; justify-content: center; align-items: center; font-weight: 600; }
+        .student-name { font-weight: 600; }
+        .student-roll { font-size: 0.85rem; color: var(--text-muted); }
+
+        .action-btns { display: flex; gap: 8px; }
+        .btn-mark { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: white; font-weight: 600; cursor: pointer; }
+        .btn-p { color: var(--success); } .btn-p.active { background: var(--success); color: white; }
+        .btn-a { color: var(--danger); } .btn-a.active { background: var(--danger); color: white; }
+
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-p { background: var(--success-bg); color: var(--success); }
+        .badge-a { background: var(--danger-bg); color: var(--danger); }
+
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--card-bg); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 15px 0; z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; }
+        .nav-item.active { color: var(--primary); font-weight: 600; }
+        
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 15px; }
+        .filter-bar input { padding: 10px; }
+
+        .section { display: none; }
+        .section.active { display: block; }
+        
+        .btn-delete { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.2rem; padding: 10px; }
+        
+        .search-bar { margin-bottom: 15px; position: relative; }
+        .search-bar i { position: absolute; left: 15px; top: 15px; color: var(--text-muted); }
+        .search-bar input { padding-left: 40px; border-radius: 20px; }
+
+        .defaulter-warning { color: var(--danger); font-weight: 700; }
+        .defaulter-good { color: var(--success); font-weight: 700; }
+
+        #login-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .login-card { width: 100%; max-width: 400px; text-align: center; }
+        .login-icon { font-size: 3rem; color: var(--primary); margin-bottom: 15px; }
+        .role-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+        .role-btn { flex: 1; padding: 15px; border-radius: 12px; border: 2px solid var(--border); background: white; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .role-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+        .role-btn i { font-size: 1.5rem; }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen">
+        <div class="login-card">
+            <div class="login-icon"><i class="fas fa-layer-group"></i></div>
+            <h2 style="margin-bottom: 20px;">CloudAttend Login</h2>
+            <div class="role-selector">
+                <div class="role-btn active" id="role-teacher" onclick="setRole('teacher')"><i class="fas fa-chalkboard-teacher"></i> Teacher</div>
+                <div class="role-btn" id="role-student" onclick="setRole('student')"><i class="fas fa-user-graduate"></i> Student</div>
+            </div>
+            <div id="teacher-login-form">
+                <div class="form-group"><input type="password" id="teacherPin" placeholder="Enter Teacher PIN (1234)"></div>
+                <button class="btn btn-primary" onclick="loginTeacher()">Login as Teacher</button>
+            </div>
+            <div id="student-login-form" style="display: none;">
+                <div class="form-group"><input type="text" id="studentRoll" placeholder="Enter your Roll Number"></div>
+                <button class="btn btn-primary" onclick="loginStudent()">View My Attendance</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="main-app" style="display: none;">
+        <div class="navbar">
+            <div class="logo"><i class="fas fa-layer-group"></i> CloudAttend</div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span id="userLabel" style="font-size: 0.85rem; font-weight: 600; color: var(--primary);"></span>
+                <button class="btn btn-danger" style="padding: 8px 12px; width: auto; font-size: 0.8rem;" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- TEACHER SECTIONS -->
+            <div id="home-section" class="section">
+                <div class="stats-grid">
+                    <div class="stat-box"><div class="stat-val" style="color: var(--primary)" id="statTotal">0</div><div class="stat-label">Students</div></div>
+                    <div class="stat-box"><div class="stat-val" style="color: var(--success)" id="statPresent">0</div><div class="stat-label">Present Today</div></div>
+                    <div class="stat-box"><div class="stat-val" style="color: var(--danger)" id="statAbsent">0</div><div class="stat-label">Absent Today</div></div>
+                </div>
+
+                <div class="card" style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
+                    <div class="card-title" style="align-self: flex-start;"><i class="fas fa-chart-pie" style="color: var(--primary)"></i> Today's Overview</div>
+                    <div class="chart-container">
+                        <canvas id="attendanceChart" width="200" height="200"></canvas>
+                        <div class="chart-center-text"><div class="chart-center-val" id="chartPercent">0%</div><div class="chart-center-label">Present</div></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-calendar-check" style="color: var(--success)"></i> Mark Attendance</div>
+                    <div class="form-group"><input type="date" id="aDate" onchange="loadTodayStudents()"></div>
+                    <div class="search-bar"><i class="fas fa-search"></i><input type="text" id="searchHome" placeholder="Search student..." onkeyup="filterHomeList()"></div>
+                    <div id="studentListContainer"></div>
+                </div>
+            </div>
+
+            <div id="students-section" class="section">
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-user-plus" style="color: var(--primary)"></i> Add New Student</div>
+                    <div class="form-group"><input type="text" id="sName" placeholder="Full Name"></div>
+                    <div class="form-group"><input type="text" id="sRoll" placeholder="Roll Number"></div>
+                    <div class="form-group"><input type="text" id="sClass" placeholder="Class (e.g. 10A)"></div>
+                    <button class="btn btn-primary" onclick="addStudent()"><i class="fas fa-plus"></i> Register Student</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-users" style="color: var(--primary)"></i> All Enrolled Students</div>
+                    <div class="search-bar"><i class="fas fa-search"></i><input type="text" id="searchStudents" placeholder="Search student..." onkeyup="filterStudentsList()"></div>
+                    <div id="allStudentsContainer"></div>
+                </div>
+            </div>
+
+            <div id="reports-section" class="section">
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-exclamation-triangle" style="color: var(--warning)"></i> Attendance Analytics (Below 75% = Red)</div>
+                    <div id="defaulterContainer"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-history" style="color: var(--warning)"></i> Daily Attendance Logs</div>
+                    <div class="filter-bar">
+                        <input type="date" id="filterDate" onchange="loadHistory()" style="flex: 1;">
+                        <button class="btn btn-primary" onclick="document.getElementById('filterDate').value=''; loadHistory();" style="width: auto; padding: 0 15px; background: var(--text-muted);">Clear</button>
+                    </div>
+                    <div id="historyContainer"></div>
+                    <button class="btn btn-success" onclick="downloadCSV()" style="margin-top: 20px;"><i class="fas fa-file-excel"></i> Download CSV Report</button>
+                </div>
+            </div>
+
+            <div id="student-view-section" class="section">
+                <div class="card" style="text-align: center; background: var(--primary); color: white;">
+                    <h2 id="studentNameDisplay" style="margin-bottom: 5px;"></h2>
+                    <p id="studentClassDisplay" style="opacity: 0.9; margin-bottom: 15px;"></p>
+                    <div style="font-size: 2.5rem; font-weight: 700;" id="studentPercentage"></div>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">Overall Attendance %</div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-calendar-alt" style="color: var(--primary)"></i> My Attendance History</div>
+                    <div id="studentHistoryContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-nav" id="teacher-nav">
+            <div class="nav-item active" id="nav-home" onclick="switchTab('home')"><i class="fas fa-home"></i> Home</div>
+            <div class="nav-item" id="nav-reports" onclick="switchTab('reports')"><i class="fas fa-chart-pie"></i> Reports</div>
+            <div class="nav-item" id="nav-students" onclick="switchTab('students')"><i class="fas fa-user-friends"></i> Students</div>
+        </div>
+    </div>
+
+    <script>
+        let currentRole = 'teacher';
+
+        // --- AUTH LOGIC ---
+        function setRole(role) {
+            currentRole = role;
+            document.getElementById('role-teacher').classList.toggle('active', role === 'teacher');
+            document.getElementById('role-student').classList.toggle('active', role === 'student');
+            document.getElementById('teacher-login-form').style.display = role === 'teacher' ? 'block' : 'none';
+            document.getElementById('student-login-form').style.display = role === 'student' ? 'block' : 'none';
+        }
+
+        function loginTeacher() {
+            const pin = document.getElementById('teacherPin').value;
+            if(pin === '1234') { showApp('teacher'); } 
+            else { alert('Incorrect PIN! Use 1234 for testing.'); }
+        }
+
+        async function loginStudent() {
+            const roll = document.getElementById('studentRoll').value;
+            if(!roll) return alert('Please enter your Roll Number');
+            const res = await fetch(`/api/student-login/${roll}`);
+            if(!res.ok) return alert('Student not found. Check your roll number.');
+            const data = await res.json();
+            document.getElementById('studentNameDisplay').innerText = data.student.name;
+            document.getElementById('studentClassDisplay').innerText = `Class: ${data.student.class} | Roll: ${data.student.rollNo}`;
+            document.getElementById('studentPercentage').innerText = `${data.percentage}%`;
+            const container = document.getElementById('studentHistoryContainer');
+            if(data.records.length === 0) { container.innerHTML = '<p style="text-align:center;color:var(--text-muted);">No records yet.</p>'; } 
+            else {
+                container.innerHTML = '';
+                data.records.forEach(r => {
+                    const isPresent = r.status === 'Present';
+                    container.innerHTML += `<div class="student-item"><div><div class="student-name">${r.date}</div></div><span class="badge ${isPresent ? 'badge-p' : 'badge-a'}">${r.status}</span></div>`;
+                });
+            }
+            showApp('student');
+        }
+
+        function showApp(role) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            document.getElementById('userLabel').innerText = role === 'teacher' ? 'Teacher Mode' : 'Student Mode';
+            if(role === 'teacher') {
+                document.getElementById('teacher-nav').style.display = 'flex';
+                switchTab('home');
+            } else {
+                document.getElementById('teacher-nav').style.display = 'none';
+                document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+                document.getElementById('student-view-section').classList.add('active');
+            }
+        }
+
+        function logout() {
+            document.getElementById('main-app').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('teacherPin').value = '';
+            document.getElementById('studentRoll').value = '';
+        }
+
+        // --- TEACHER DASHBOARD LOGIC ---
+        document.getElementById('aDate').valueAsDate = new Date();
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.getElementById(`${tabName}-section`).classList.add('active');
+            document.getElementById(`nav-${tabName}`).classList.add('active');
+            if(tabName === 'home') { loadStats(); loadTodayStudents(); }
+            if(tabName === 'students') { loadAllStudents(); }
+            if(tabName === 'reports') { loadHistory(); loadDefaulters(); }
+        }
+
+        function filterHomeList() {
+            const query = document.getElementById('searchHome').value.toLowerCase();
+            document.querySelectorAll('#studentListContainer .student-item').forEach(item => {
+                item.style.display = item.innerText.toLowerCase().includes(query) ? 'flex' : 'none';
+            });
+        }
+
+        function filterStudentsList() {
+            const query = document.getElementById('searchStudents').value.toLowerCase();
+            document.querySelectorAll('#allStudentsContainer .student-item').forEach(item => {
+                item.style.display = item.innerText.toLowerCase().includes(query) ? 'flex' : 'none';
+            });
+        }
+
+        function drawChart(present, absent) {
+            const canvas = document.getElementById('attendanceChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const total = present + absent;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let percent = total > 0 ? Math.round((present / total) * 100) : 0;
+            document.getElementById('chartPercent').innerText = `${percent}%`;
+            if (total === 0) return;
+            const centerX = canvas.width / 2; const centerY = canvas.height / 2; const radius = 80; const lineWidth = 25;
+            ctx.beginPath(); ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI); ctx.strokeStyle = '#fee2e2'; ctx.lineWidth = lineWidth; ctx.stroke();
+            if (present > 0) {
+                const endAngle = (present / total) * 2 * Math.PI - (Math.PI / 2);
+                ctx.beginPath(); ctx.arc(centerX, centerY, radius, -Math.PI / 2, endAngle); ctx.strokeStyle = '#10b981'; ctx.lineWidth = lineWidth; ctx.lineCap = 'round'; ctx.stroke();
+            }
+        }
+
+        async function loadStats() {
+            const res = await fetch('/api/stats');
+            const data = await res.json();
+            document.getElementById('statTotal').innerText = data.totalStudents;
+            document.getElementById('statPresent').innerText = data.todayPresent;
+            document.getElementById('statAbsent').innerText = data.todayAbsent;
+            drawChart(data.todayPresent, data.todayAbsent);
+        }
+
+        async function loadTodayStudents() {
+            const date = document.getElementById('aDate').value;
+            const resS = await fetch('/api/students');
+            const students = await resS.json();
+            const resA = await fetch(`/api/attendance?date=${date}`);
+            const attendance = await resA.json();
+            const container = document.getElementById('studentListContainer');
+            if (students.length === 0) return container.innerHTML = '<p style="text-align:center;color:var(--text-muted);">No students found.</p>';
+            container.innerHTML = '';
+            students.forEach(s => {
+                const record = attendance.find(a => a.studentId && a.studentId._id === s._id);
+                let pClass = ''; let aClass = '';
+                if(record) { if(record.status === 'Present') pClass = 'active'; if(record.status === 'Absent') aClass = 'active'; }
+                container.innerHTML += `
+                    <div class="student-item" id="student-${s._id}">
+                        <div class="student-info"><div class="avatar">${s.name.charAt(0).toUpperCase()}</div><div><div class="student-name">${s.name}</div><div class="student-roll">Roll: ${s.rollNo}</div></div></div>
+                        <div class="action-btns"><button class="btn-mark btn-p ${pClass}" onclick="markAttendance('${s._id}', 'Present')">P</button><button class="btn-mark btn-a ${aClass}" onclick="markAttendance('${s._id}', 'Absent')">A</button></div>
+                    </div>`;
+            });
+        }
+
+        async function loadAllStudents() {
+            const res = await fetch('/api/students');
+            const students = await res.json();
+            const container = document.getElementById('allStudentsContainer');
+            if (students.length === 0) return container.innerHTML = '<p style="text-align:center;color:var(--text-muted);">No students found.</p>';
+            container.innerHTML = '';
+            students.forEach(s => {
+                container.innerHTML += `
+                    <div class="student-item">
+                        <div class="student-info"><div class="avatar">${s.name.charAt(0).toUpperCase()}</div><div><div class="student-name">${s.name}</div><div class="student-roll">Roll: ${s.rollNo} • Class: ${s.class}</div></div></div>
+                        <button class="btn-delete" onclick="deleteStudent('${s._id}')"><i class="fas fa-trash"></i></button>
+                    </div>`;
+            });
+        }
+
+        async function loadDefaulters() {
+            const res = await fetch('/api/defaulter');
+            const data = await res.json();
+            const container = document.getElementById('defaulterContainer');
+            if(data.length === 0) return container.innerHTML = '<p style="text-align:center;color:var(--text-muted);">No students found.</p>';
+            container.innerHTML = '';
+            data.forEach(s => {
+                const isLow = s.percentage < 75;
+                container.innerHTML += `
+                    <div class="student-item">
+                        <div class="student-info"><div><div class="student-name">${s.name}</div><div class="student-roll">Roll: ${s.rollNo} • ${s.presentDays}/${s.totalDays} Days</div></div></div>
+                        <span class="${isLow ? 'defaulter-warning' : 'defaulter-good'}">${s.percentage}%</span>
+                    </div>`;
+            });
+        }
+
+        async function addStudent() {
+            const name = document.getElementById('sName').value;
+            const rollNo = document.getElementById('sRoll').value;
+            const cls = document.getElementById('sClass').value;
+            if(!name || !rollNo || !cls) return alert('Fill all fields');
+            const res = await fetch('/api/students', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name, rollNo, class: cls}) });
+            if((await res.json()).student) {
+                document.getElementById('sName').value = ''; document.getElementById('sRoll').value = ''; document.getElementById('sClass').value = '';
+                loadAllStudents(); loadStats();
+            }
+        }
+
+        async function deleteStudent(id) {
+            if(!confirm('Delete this student and all their records?')) return;
+            const res = await fetch(`/api/students/${id}`, { method: 'DELETE' });
+            if(res.ok) { loadAllStudents(); loadStats(); }
+        }
+
+        async function markAttendance(studentId, status) {
+            const date = document.getElementById('aDate').value;
+            const res = await fetch('/api/attendance', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({studentId, date, status}) });
+            if((await res.json()).attendance) {
+                const item = document.getElementById(`student-${studentId}`);
+                if(item) {
+                    const pBtn = item.querySelector('.btn-p'); const aBtn = item.querySelector('.btn-a');
+                    if(status === 'Present') { pBtn.classList.add('active'); aBtn.classList.remove('active'); } 
+                    else { aBtn.classList.add('active'); pBtn.classList.remove('active'); }
+                }
+                loadStats();
+            }
+        }
+
+        async function loadHistory() {
+            const filterDate = document.getElementById('filterDate').value;
+            const url = filterDate ? `/api/attendance?date=${filterDate}` : '/api/attendance';
+            const res = await fetch(url);
+            const records = await res.json();
+            const container = document.getElementById('historyContainer');
+            if (records.length === 0) return container.innerHTML = '<p style="text-align:center;color:var(--text-muted);">No records found.</p>';
+            container.innerHTML = '';
+            records.slice(0, 10).forEach(r => {
+                const isPresent = r.status === 'Present';
+                container.innerHTML += `
+                    <div class="student-item">
+                        <div class="student-info"><div><div class="student-name">${r.studentId ? r.studentId.name : 'Unknown'}</div><div class="student-roll">${r.date}</div></div></div>
+                        <span class="badge ${isPresent ? 'badge-p' : 'badge-a'}">${r.status}</span>
+                    </div>`;
+            });
+        }
+
+        function downloadCSV() { window.location.href = '/api/export'; }
+    </script>
+</body>
+</html>
